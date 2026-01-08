@@ -5,7 +5,8 @@ int main() {
     hashmap map;
     map.insert("name", "Alice");
     map.insert("age", "30");
-    map.insert("sex", "female");
+    map.insert("Mother", "Eva");
+    map.insert("Father", "John");
     map.insert("husband", "Peter");
     map.insert("weight", "70kg");
     map.insert("pay", "100k");
@@ -20,6 +21,6 @@ int main() {
     map.insert("experience", "5 years");
     map.insert("department", "IT");
     map.insert("status", "Active");
-    std::cout << map.get("sex") << std::endl;
+    std::cout << map.get("status") << std::endl;
     return 0;
 }
