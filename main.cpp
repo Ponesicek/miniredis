@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include <unordered_map>
+#include "hashmap.hpp"
 #include <sstream>
 #include <vector>
 #include <algorithm>
@@ -12,7 +12,7 @@
 
 class MiniRedis {
 private:
-    std::unordered_map<std::string, std::string> data;
+    hashmap data;
     int server_fd;
     int port;
     //https://redis.io/docs/latest/develop/reference/protocol-spec/1
@@ -57,7 +57,8 @@ private:
             if (tokens.size() < 3) {
                 return "-ERR wrong number of arguments for 'set' command\r\n";
             }
-            data[tokens[1]] = tokens[2];
+            //data[tokens[1]] = tokens[2];
+            data.insert(tokens[1], tokens[2]);
             return "+OK\r\n";
         }
         else if (cmd == "GET") {

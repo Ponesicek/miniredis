@@ -18,7 +18,16 @@ class LinkedList {
         void append(std::string key, std::string value) {
             Node* current = head;
             while (current->next) {
+                if (current->key == key) {
+                    current->value = value;
+                    return;
+                }
                 current = current->next;
+            }
+            // Check the last node before appending
+            if (current->key == key) {
+                current->value = value;
+                return;
             }
             current->next = new Node(key, value);
         }

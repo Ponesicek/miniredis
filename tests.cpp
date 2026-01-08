@@ -1,8 +1,10 @@
 #include "hashmap.hpp"
 #include <iostream>
+#include <unordered_map>
 
 int main() {
     hashmap map;
+    //std::unordered_map<std::string, std::string> map;
     map.insert("name", "Alice");
     map.insert("age", "30");
     map.insert("Mother", "Eva");
@@ -21,6 +23,9 @@ int main() {
     map.insert("experience", "5 years");
     map.insert("department", "IT");
     map.insert("status", "Active");
-    std::cout << map.get("status") << std::endl;
-    return 0;
+    std::cout << "[find.first]: " << map.find("status")->first << ", Should be: status"<< std::endl;
+    std::cout << "[find.second]: " << map.find("status")->second << ", Should be: Active"<< std::endl;
+    map.erase("age");
+    std::cout << "[erase (age)]: " << map.get("age") << ", Should be: " << std::endl;
+    return 1;
 }
