@@ -6,6 +6,9 @@ on:
       - 'v*'  # Triggers on version tags like v1.0.0
   workflow_dispatch:  # Allows manual trigger
 
+permissions:
+  contents: write
+
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
@@ -20,23 +23,11 @@ jobs:
     - name: Build executable
       run: g++ -std=c++17 -O2 main.cpp -o miniredis-linux-x64
       
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
+    - name: Create Release and Upload Asset
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref_name }}
-        release_name: Release ${{ github.ref_name }}
-        draft: false
-        prerelease: false
-        
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./miniredis-linux-x64
-        asset_name: miniredis-linux-x64
-        asset_content_type: application/octet-stream
+      run: |
+        gh release create ${{ github.ref_name }} \
+          --title "Release ${{ github.ref_name }}" \
+          --notes "Automated release of miniredis" \
+          miniredis-linux-x64
