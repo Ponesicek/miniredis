@@ -2,6 +2,7 @@
 #include "linkedlist.hpp"
 #include <iostream>
 #define HASHMAP_SIZE 2
+#define LOAD_FACTOR 1
 
 class hashmap
 {
@@ -25,7 +26,7 @@ public:
             list[index]->append(key, value);
         }
         ammountOfObjects++;
-        if (ammountOfObjects / size > 2)
+        if (ammountOfObjects / size > LOAD_FACTOR)
         {
             doubleSize();
         }
@@ -59,6 +60,7 @@ public:
         {
             list[i] = nullptr;
         }
+        ammountOfObjects = 0;
         for (int i = 0; i < oldSize; i++)
         {
             if (oldList[i] != nullptr)
@@ -66,7 +68,16 @@ public:
                 Node* current = oldList[i]->head;
                 while (current)
                 {
-                    insert(current->key, current->value);
+                    int index = std::hash<std::string>{}(current->key) % size;
+                    if (list[index] == nullptr)
+                    {
+                        list[index] = new LinkedList(current->key, current->value);
+                    }
+                    else
+                    {
+                        list[index]->append(current->key, current->value);
+                    }
+                    ammountOfObjects++;
                     current = current->next;
                 }
                 delete oldList[i];
