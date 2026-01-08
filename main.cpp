@@ -71,6 +71,21 @@ private:
             }
             return "$-1\r\n";
         }
+        else if (cmd == "APPEND") {
+            if (tokens.size() < 3) {
+                return "-ERR wrong number of arguments for 'APPEND' command\r\n";
+            }
+            auto it = data.find(tokens[1]);
+            if (it != data.end()) {
+                data.insert(tokens[1], it->second + tokens[2]);
+                return ":" + std::to_string((it->second + tokens[2]).length()) + "\r\n";
+            }
+            else {
+                data.insert(tokens[1], tokens[2]);
+                return ":" + std::to_string(tokens[2].length()) + "\r\n";
+            }
+            return "$-1\r\n";
+        }
         else if (cmd == "DEL") {
             if (tokens.size() < 2) {
                 return "-ERR wrong number of arguments for 'del' command\r\n";
