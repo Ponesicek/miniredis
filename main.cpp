@@ -9,10 +9,13 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <mutex>
+#include <thread>
 
 class MiniRedis {
 private:
     hashmap data;
+    std::mutex data_mutex;
     int server_fd;
     int port;
     //https://redis.io/docs/latest/develop/reference/protocol-spec/1
@@ -57,14 +60,17 @@ private:
             if (tokens.size() < 3) {
                 return "-ERR wrong number of arguments for 'set' command\r\n";
             }
-            //data[tokens[1]] = tokens[2];
-            data.insert(tokens[1], tokens[2]);
+            {
+                std::lock_guard<std::mutex> lock(data_mutex);
+                data.insert(tokens[1], tokens[2]);
+            }
             return "+OK\r\n";
         }
         else if (cmd == "GET") {
             if (tokens.size() < 2) {
                 return "-ERR wrong number of arguments for 'get' command\r\n";
             }
+            std::lock_guard<std::mutex> lock(data_mutex);
             auto it = data.find(tokens[1]);
             if (it != data.end()) {
                 return "$" + std::to_string(it->second.length()) + "\r\n" + it->second + "\r\n";
@@ -75,21 +81,22 @@ private:
             if (tokens.size() < 3) {
                 return "-ERR wrong number of arguments for 'APPEND' command\r\n";
             }
+            std::lock_guard<std::mutex> lock(data_mutex);
             auto it = data.find(tokens[1]);
             if (it != data.end()) {
                 data.insert(tokens[1], it->second + tokens[2]);
-                return ":" + std::to_string((it->second + tokens[2]).length()) + "\r\n";
+                return ":" + std::to_string((it->second).length()) + "\r\n";
             }
             else {
                 data.insert(tokens[1], tokens[2]);
-                return ":" + std::to_string(tokens[2].length()) + "\r\n";
+                return ":" + std::to_string(it->second.length()) + "\r\n";
             }
-            return "$-1\r\n";
         }
         else if (cmd == "DEL") {
             if (tokens.size() < 2) {
                 return "-ERR wrong number of arguments for 'del' command\r\n";
             }
+            std::lock_guard<std::mutex> lock(data_mutex);
             int count = 0;
             for (size_t i = 1; i < tokens.size(); i++) {
                 if (data.erase(tokens[i])) {
@@ -102,6 +109,7 @@ private:
             if (tokens.size() < 2) {
                 return "-ERR wrong number of arguments for 'exists' command\r\n";
             }
+            std::lock_guard<std::mutex> lock(data_mutex);
             int count = 0;
             for (size_t i = 1; i < tokens.size(); i++) {
                 if (data.find(tokens[i]) != data.end()) {
@@ -111,6 +119,7 @@ private:
             return ":" + std::to_string(count) + "\r\n";
         }
         else if (cmd == "KEYS") {
+            std::lock_guard<std::mutex> lock(data_mutex);
             std::string result = "*" + std::to_string(data.size()) + "\r\n";
             for (const auto& pair : data) {
                 result += "$" + std::to_string(pair.first.length()) + "\r\n" + pair.first + "\r\n";
@@ -187,8 +196,8 @@ public:
             std::cout << "Client connected from " 
                       << inet_ntoa(client_addr.sin_addr) << std::endl;
 
-            handleClient(client_fd);
-            close(client_fd);
+        std::thread clientThread(&MiniRedis::handleClient, this, client_fd);
+        clientThread.detach();
         }
     }
 
@@ -215,7 +224,6 @@ private:
             if (input.empty()) {
                 continue;
             }
-
             std::vector<std::string> tokens = parseCommand(input);
             
             if (!tokens.empty() && tokens[0] == "QUIT") {
