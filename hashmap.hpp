@@ -12,6 +12,67 @@ private:
     int ammountOfObjects = 0;
 
 public:
+    class Iterator {
+    private:
+        LinkedList** list;
+        int count;
+        int currentBucket;
+        Node* currentNode;
+
+        void findNextValid() {
+            while (currentBucket < count) {
+                if (list[currentBucket] != nullptr) {
+                    currentNode = list[currentBucket]->head;
+                    return;
+                }
+                currentBucket++;
+            }
+            currentNode = nullptr;
+        }
+
+    public:
+        Iterator(LinkedList** l, int c, int bucket, Node* node) 
+            : list(l), count(c), currentBucket(bucket), currentNode(node) {
+            if (currentNode == nullptr && currentBucket < count) {
+                findNextValid();
+            }
+        }
+
+        std::pair<std::string, std::string> operator*() const {
+            return std::make_pair(currentNode->key, currentNode->value);
+        }
+
+        // Helper class for operator->
+        struct ArrowProxy {
+            std::pair<std::string, std::string> pair;
+            std::pair<std::string, std::string>* operator->() {
+                return &pair;
+            }
+        };
+
+        ArrowProxy operator->() const {
+            return ArrowProxy{std::make_pair(currentNode->key, currentNode->value)};
+        }
+
+        Iterator& operator++() {
+            if (currentNode && currentNode->next) {
+                currentNode = currentNode->next;
+            } else {
+                currentBucket++;
+                findNextValid();
+            }
+            return *this;
+        }
+
+        bool operator!=(const Iterator& other) const {
+            return currentNode != other.currentNode || currentBucket != other.currentBucket;
+        }
+
+        bool operator==(const Iterator& other) const {
+            return !(*this != other);
+        }
+    };
+
     hashmap();
     ~hashmap();
     void insert(std::string key, std::string value)
@@ -54,24 +115,13 @@ public:
         }
         return *(new std::string(""));
     }
-    std::pair<std::string, std::string>* begin()
+    Iterator begin()
     {
-        for (int i = 0; i < count; i++)
-        {
-            if (list[i] != nullptr)
-            {
-                Node* current = list[i]->head;
-                if (current != nullptr)
-                {
-                    return new std::pair<std::string, std::string>(current->key, current->value);
-                }
-            }
-        }
-        return nullptr;
+        return Iterator(list, count, 0, nullptr);
     }
-    std::pair<std::string, std::string>* end()
+    Iterator end()
     {
-        return nullptr;
+        return Iterator(list, count, count, nullptr);
     }
     std::string& operator[](std::string index) {
         return get(index);
@@ -113,23 +163,23 @@ public:
         }
         return false;
     }
-    std::pair<std::string, std::string>* find(std::string key)
+    Iterator find(std::string key)
     {
         int index = std::hash<std::string>{}(key) % count;
         if (list[index] == nullptr)
         {
-            return nullptr;
+            return end();
         }
         Node* current = list[index]->head;
         while (current)
         {
             if (current->key == key)
             {
-                return new std::pair<std::string, std::string>(current->key, current->value);
+                return Iterator(list, count, index, current);
             }
             current = current->next;
         }
-        return nullptr;
+        return end();
     }
     void doubleSize()
     {
