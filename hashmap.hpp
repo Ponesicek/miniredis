@@ -81,12 +81,15 @@ public:
         if (list[index] == nullptr)
         {
             list[index] = new LinkedList(key, value);
+            ammountOfObjects++;
+
         }
         else
         {
-            list[index]->append(key, value);
+            if (list[index]->append(key, value)) {
+                ammountOfObjects++;
+            }
         }
-        ammountOfObjects++;
         if (ammountOfObjects / count > LOAD_FACTOR)
         {
             doubleSize();

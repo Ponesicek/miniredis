@@ -15,21 +15,22 @@ class LinkedList {
             clear();
         }
 
-        void append(std::string key, std::string value) {
+        bool append(std::string key, std::string value) {
             Node* current = head;
             while (current->next) {
                 if (current->key == key) {
                     current->value = value;
-                    return;
+                    return false;
                 }
                 current = current->next;
             }
             // Check the last node before appending
             if (current->key == key) {
                 current->value = value;
-                return;
+                return false;
             }
             current->next = new Node(key, value);
+            return true;
         }
 
         void clear() {
